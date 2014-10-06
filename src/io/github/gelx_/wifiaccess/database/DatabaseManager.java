@@ -97,4 +97,6 @@ public class DatabaseManager {
 
     }
 
+    //TODO: Add methods for interaction with project
+    //TODO: Add database interface (statements...)
 }

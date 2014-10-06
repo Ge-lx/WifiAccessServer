@@ -14,6 +14,6 @@ public class WifiAccess {
 
         LOGGER.info("Starting WifiAccess v" + VERSION);
 
-
+        //TODO: Write main
     }
 }
