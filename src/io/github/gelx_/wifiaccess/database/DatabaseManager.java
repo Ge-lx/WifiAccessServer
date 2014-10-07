@@ -2,15 +2,14 @@ package io.github.gelx_.wifiaccess.database;
 
 import io.github.gelx_.wifiaccess.WifiAccess;
 
+import javax.xml.transform.Result;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.Properties;
 
 /**
@@ -20,8 +19,6 @@ public class DatabaseManager {
 
     public static final String CONFIGNAME = "db.properties";
     public static final String TABLENAME = "users";
-
-
 
     private Connection dbConn;
 
@@ -86,7 +83,7 @@ public class DatabaseManager {
         }
 
         WifiAccess.LOGGER.info("Connected to database: " + url);
-        WifiAccess.LOGGER.info("Validating... (max 10s)");
+        WifiAccess.LOGGER.info("Validating connection... (max 10s)");
         try {
             if(!this.dbConn.isValid(10))
                 throw new SQLException("isValid() returned false");
@@ -95,8 +92,42 @@ public class DatabaseManager {
             System.exit(1);
         }
 
+
+        //Prepare statements
+
+        /*this.selectUserByName = dbConn.prepareStatement("SELECT * FROM " + TABLENAME + " WHERE name = ?;");
+        this.selectUserByMac = dbConn.prepareStatement("SELECT * FROM " + TABLENAME + " WHERE mac = ?;");
+        this.selectExpiredUsers = dbConn.prepareStatement("SELECT * FROM " + TABLENAME + " WHERE expires < ?");
+        */
+    }
+
+    public DB_users getUserByName(String name){
+        try {
+            PreparedStatement selectUserByName = dbConn.prepareStatement("SELECT * FROM " + TABLENAME + " WHERE name = ?;");
+            selectUserByName.setString(1, name);
+            ResultSet result = selectUserByName.executeQuery();
+            if(!result.first()){
+                WifiAccess.LOGGER.info("Requested non-existent user " + name);
+                return null;
+            }
+            String mac = result.getString("mac");
+            long expires = result.getLong("expires");
+
+            result.close();
+
+            try {
+                return new DB_users(name, mac, expires);
+            } catch (IllegalArgumentException e) {
+                WifiAccess.LOGGER.info("User " + name + " has invalid data: " + e.getMessage());
+                return null;
+            }
+
+        } catch (SQLException e) {
+            WifiAccess.LOGGER.severe("Error querying user by name: " + e.getMessage());
+            return null;
+        }
     }
 
     //TODO: Add methods for interaction with project
-    //TODO: Add database interface (statements...)
+    //TODO: Add database interface (statements...) | in progress...
 }
