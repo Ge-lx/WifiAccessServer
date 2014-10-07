@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -114,7 +116,6 @@ public class DatabaseManager {
             long expires = result.getLong("expires");
 
             result.close();
-
             try {
                 return new DB_users(name, mac, expires);
             } catch (IllegalArgumentException e) {
@@ -141,6 +142,8 @@ public class DatabaseManager {
             }
             String name = result.getString("name");
             long expires = result.getLong("expires");
+
+            result.close();
             try{
                 return new DB_users(name, mac, expires);
             } catch (IllegalArgumentException e) {
@@ -153,7 +156,35 @@ public class DatabaseManager {
         }
     }
 
+    public List<DB_users> getExpiredUsers(){
+        try {
+            PreparedStatement selectExpiredUsers = dbConn.prepareStatement("SELECT * FROM " + TABLENAME + " WHERE expires < ?");
+            selectExpiredUsers.setLong(1, System.currentTimeMillis());
+            ResultSet result = selectExpiredUsers.executeQuery();
 
+            List<DB_users> users = new ArrayList<>();
+            if(!result.first()){
+                WifiAccess.LOGGER.info("No expired users");
+                return users;
+            }
+            do{
+                String name = result.getString("name");
+                String mac = result.getString("mac");
+                long expires = result.getLong("expires");
+                try {
+                    users.add(new DB_users(name, mac, expires));
+                } catch (IllegalArgumentException e) {
+                    WifiAccess.LOGGER.info("User " + name + " has invalid data: " + e.getMessage());
+                }
+            }while(result.next());
+            result.close();
+
+            return users;
+        } catch (SQLException e) {
+            WifiAccess.LOGGER.severe("Error querying for expired users: " + e.getMessage());
+            return null;
+        }
+    }
 
     //TODO: Add methods for interaction with project
     //TODO: Add database interface (statements...) | in progress...

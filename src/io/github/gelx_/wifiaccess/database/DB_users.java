@@ -15,6 +15,8 @@ public class DB_users {
     private long expires;
 
     public DB_users(String name, String mac, long expires){
+        if(name == null || mac == null)
+            throw new IllegalArgumentException("Name or mac may not be null!");
         this.name = name;
         if(! MACREGEX.matcher(mac).matches()){
             throw new IllegalArgumentException("Given mac address is not valid: " + mac);
