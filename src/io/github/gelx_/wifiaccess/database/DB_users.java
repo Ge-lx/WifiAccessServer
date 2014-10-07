@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
  */
 public class DB_users {
 
-    private static final Pattern MACREGEX = Pattern.compile("^([0-9A-F]{2}[:-]){5}([0-9A-F]{2})$");
+    public static final Pattern MACREGEX = Pattern.compile("^([0-9A-F]{2}[:-]){5}([0-9A-F]{2})$");
 
     private String name;
     private String mac;
@@ -20,9 +20,6 @@ public class DB_users {
             throw new IllegalArgumentException("Given mac address is not valid: " + mac);
         }
         this.mac = mac;
-        if(System.currentTimeMillis() >= expires){
-            throw new IllegalArgumentException("Expiredate is in the past!");
-        }
         this.expires = expires;
     }
 

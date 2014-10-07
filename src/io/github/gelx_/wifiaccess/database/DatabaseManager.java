@@ -121,12 +121,39 @@ public class DatabaseManager {
                 WifiAccess.LOGGER.info("User " + name + " has invalid data: " + e.getMessage());
                 return null;
             }
-
         } catch (SQLException e) {
             WifiAccess.LOGGER.severe("Error querying user by name: " + e.getMessage());
             return null;
         }
     }
+
+    public DB_users getUserByMac(String mac){
+        if(!DB_users.MACREGEX.matcher(mac).matches()){
+            throw new IllegalArgumentException("Given mac address is invalid: " + mac);
+        }
+        try {
+            PreparedStatement selectUserByMac = dbConn.prepareStatement("SELECT * FROM " + TABLENAME + " WHERE mac = ?;");
+            selectUserByMac.setString(1, mac);
+            ResultSet result = selectUserByMac.executeQuery();
+            if(!result.first()){
+                WifiAccess.LOGGER.info("Requested user for unknown mac: " + mac);
+                return null;
+            }
+            String name = result.getString("name");
+            long expires = result.getLong("expires");
+            try{
+                return new DB_users(name, mac, expires);
+            } catch (IllegalArgumentException e) {
+                WifiAccess.LOGGER.info("User " + name + " has invalid data: " + e.getMessage());
+                return null;
+            }
+        } catch (SQLException e) {
+            WifiAccess.LOGGER.info("Error querying for user by mac: " + e.getMessage());
+            return null;
+        }
+    }
+
+
 
     //TODO: Add methods for interaction with project
     //TODO: Add database interface (statements...) | in progress...
