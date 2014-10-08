@@ -1,5 +1,7 @@
 package io.github.gelx_.wifiaccess.database;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,4 +44,16 @@ public class DB_users {
         return this.expires <= System.currentTimeMillis();
     }
 
+    public byte[] toBytes(){
+        ByteBuffer buffer = ByteBuffer.allocateDirect(128);
+        buffer.put(Charset.defaultCharset().encode(mac));
+        buffer.putLong(expires);
+        buffer.put(Charset.defaultCharset().encode(name));
+        int index = buffer.position();
+        buffer.limit(index);
+        buffer.flip();
+        byte[] data = new byte[index];
+        buffer.get(data);
+        return data;
+    }
 }
