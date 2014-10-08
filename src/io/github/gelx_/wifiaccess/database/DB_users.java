@@ -25,6 +25,10 @@ public class DB_users {
         this.expires = expires;
     }
 
+    public DB_users(String name, String mac, int expiresIn){
+        this(name, mac, System.currentTimeMillis() + (expiresIn * 3600L));
+    }
+
     public String getName(){
         return this.name;
     }
@@ -33,6 +37,9 @@ public class DB_users {
     }
     public long getExpires() {
         return this.expires;
+    }
+    public boolean isExpired() {
+        return this.expires <= System.currentTimeMillis();
     }
 
 }
