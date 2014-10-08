@@ -201,5 +201,15 @@ public class DatabaseManager {
         }
     }
 
-    //TODO: Add delete-method
+    public void deleteUser(String name){
+        try {
+            PreparedStatement deleteUser = dbConn.prepareStatement("DELETE * FROM " + TABLENAME + " WHERE name = ?;");
+            deleteUser.setString(1, name);
+            if(!deleteUser.execute()){
+                WifiAccess.LOGGER.info("Could not delete user " + name);
+            }
+        } catch (SQLException e) {
+            WifiAccess.LOGGER.info("Error deleting user from database: " + e.getMessage());
+        }
+    }
 }
