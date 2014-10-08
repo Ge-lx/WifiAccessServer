@@ -186,6 +186,20 @@ public class DatabaseManager {
         }
     }
 
-    //TODO: Add methods for interaction with project
-    //TODO: Add database interface (statements...) | in progress...
+    public void addUser(DB_users user) {
+        try {
+            PreparedStatement insetUser = dbConn.prepareStatement("INSERT INTO " + TABLENAME + " VALUES (?,?,?);");
+            insetUser.setString(1, user.getName());
+            insetUser.setString(2, user.getMac());
+            insetUser.setLong(3, user.getExpires());
+            if(!insetUser.execute()){
+                WifiAccess.LOGGER.info("Could not insert new user into database!");
+                return;
+            }
+        } catch (SQLException e) {
+            WifiAccess.LOGGER.info("Error inserting new user into database: " + e.getMessage());
+        }
+    }
+
+    //TODO: Add delete-method
 }

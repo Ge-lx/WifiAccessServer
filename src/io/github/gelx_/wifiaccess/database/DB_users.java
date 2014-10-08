@@ -25,6 +25,14 @@ public class DB_users {
         this.expires = expires;
     }
 
-
+    public String getName(){
+        return this.name;
+    }
+    public String getMac() {
+        return this.mac;
+    }
+    public long getExpires() {
+        return this.expires;
+    }
 
 }
