@@ -27,7 +27,7 @@ public class DB_users {
         this.expires = expires;
     }
 
-    public DB_users(String name, String mac, int expiresIn){
+    public DB_users(String name, String mac, int expiresIn) {
         this(name, mac, System.currentTimeMillis() + (expiresIn * 3600L));
     }
 
@@ -55,5 +55,18 @@ public class DB_users {
         byte[] data = new byte[index];
         buffer.get(data);
         return data;
+    }
+
+    public static DB_users fromBytes(byte[] data){
+        ByteBuffer buffer = ByteBuffer.wrap(data);
+        byte[] macBytes = new byte[17];
+        buffer.get(macBytes);
+        String mac = new String(macBytes, Charset.defaultCharset());
+
+        long expires = buffer.getLong();
+        byte[] nameBytes = new byte[buffer.remaining()];
+        buffer.get(nameBytes);
+        String name = new String(nameBytes, Charset.defaultCharset());
+        return new DB_users(name, mac, expires);
     }
 }

@@ -11,37 +11,80 @@ import java.nio.charset.Charset;
 public class Protocol {
 
     public abstract class Packet{
-        protected byte[] data;
-
-        public Packet(byte[] data){
-            this.data = data; //TODO: data after constructor so updateData() is possible
-        }
-
         public abstract short getID();
-        public byte[] getData(){ return data;}
+        public abstract byte[] getData();
     }
 
     public final class RegisterUserPacket extends Packet{
         private DB_users user;
-        public RegisterUserPacket(DB_users user){
-            super(user.toBytes());
-            this.user = user;
+        private byte[] data;
+
+        public RegisterUserPacket(byte[] data){
+            this.data = data;
+            this.user = DB_users.fromBytes(data);
         }
+
         public DB_users getUser() {
             return user;
         }
         public short getID(){
             return 1;
         }
+        public byte[] getData(){
+            return data;
+        }
     }
 
+    public final class GetUserPacket extends Packet{
+        private String name;
+        private byte[] data;
 
-    /*public static final short REGISTERUSER = 1,
-                              GETUSER = 2,
-                              GETUSERS = 3,
-                              RESPUSER = 4,
-                              RESPUSERS = 5;*/
+        public GetUserPacket(byte[] data){
+            this.data = data;
+            this.name = new String(data, Charset.defaultCharset());
+        }
 
+        public String getName(){
+            return name;
+        }
+        public short getID(){
+            return 2;
+        }
+        public byte[] getData(){
+            return data;
+        }
+    }
+
+    public final class GetUsers extends Packet{
+        public short getID(){
+           return 3;
+        }
+        public byte[] getData(){
+           return new byte[0];
+        }
+    }
+
+    public final class RespUsers extends Packet{
+        private DB_users user;
+        private byte[] data;
+
+        public RespUsers(DB_users user){
+            this.user = user;
+            this.data = user.toBytes();
+        }
+
+        public DB_users getUser(){
+            return user;
+        }
+        public short getID(){
+            return 4;
+        }
+        public byte[] getData(){
+            return data;
+        }
+    }
+
+    //RESPUSERS ID 5
 
     public static ByteBuffer packPacket(short packetID, byte[] data){
         ByteBuffer buffer = ByteBuffer.allocateDirect(6 + data.length);
