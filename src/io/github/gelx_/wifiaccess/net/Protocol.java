@@ -109,19 +109,11 @@ public class Protocol {
         }
     }
 
-    public static ByteBuffer packPacket(short packetID, byte[] data){
-        ByteBuffer buffer = ByteBuffer.allocateDirect(6 + data.length);
-        buffer.putShort(packetID);
-        buffer.putInt(data.length);
-        buffer.put(data);
-        buffer.flip();
-        return buffer;
-    }
-
-    public static ByteBuffer packPacketNoData(short packetID){
-        ByteBuffer buffer = ByteBuffer.allocateDirect(6);
-        buffer.putShort(packetID);
-        buffer.putInt(0);
+    public static ByteBuffer packPacket(Packet packet){
+        ByteBuffer buffer = ByteBuffer.allocateDirect(6 + packet.getData().length);
+        buffer.putShort(packet.getID());
+        buffer.putInt(packet.getData().length);
+        buffer.put(packet.getData());
         buffer.flip();
         return buffer;
     }
