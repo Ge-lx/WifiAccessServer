@@ -10,10 +10,19 @@ public class WifiAccess {
     public static final Logger LOGGER = Logger.getLogger("WifiAccess");
     public static final String VERSION = "0.1DEV";
 
+    public static WifiAccess instance;
+
+    public WifiAccess(){
+        if(instance != null)
+            instance = this;
+    }
+
     public static void main(String... args){
 
         LOGGER.info("Starting WifiAccess v" + VERSION);
 
         //TODO: Write main
     }
+
+
 }
