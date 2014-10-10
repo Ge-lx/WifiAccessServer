@@ -10,12 +10,12 @@ import java.nio.charset.Charset;
  */
 public class Protocol {
 
-    public abstract class Packet{
+    public abstract static class Packet{
         public abstract short getID();
         public abstract byte[] getData();
     }
 
-    public final class RegisterUserPacket extends Packet{
+    public static class RegisterUserPacket extends Packet{
         private DB_users user;
         private byte[] data;
 
@@ -35,7 +35,7 @@ public class Protocol {
         }
     }
 
-    public final class GetUserPacket extends Packet{
+    public static class GetUserPacket extends Packet{
         private String name;
         private byte[] data;
 
@@ -55,7 +55,7 @@ public class Protocol {
         }
     }
 
-    public final class GetUsers extends Packet{
+    public static class GetUsers extends Packet{
         public short getID(){
            return 3;
         }
@@ -64,7 +64,7 @@ public class Protocol {
         }
     }
 
-    public final class RespUser extends Packet{
+    public static class RespUser extends Packet{
         private DB_users user;
         private byte[] data;
 
@@ -84,7 +84,7 @@ public class Protocol {
         }
     }
 
-    public final class RespUsers extends Packet{
+    public static class RespUsers extends Packet{
 
         private DB_users[] users;
         private byte[] data;
