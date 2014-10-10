@@ -64,11 +64,11 @@ public class Protocol {
         }
     }
 
-    public final class RespUsers extends Packet{
+    public final class RespUser extends Packet{
         private DB_users user;
         private byte[] data;
 
-        public RespUsers(DB_users user){
+        public RespUser(DB_users user){
             this.user = user;
             this.data = user.toBytes();
         }
@@ -84,7 +84,30 @@ public class Protocol {
         }
     }
 
-    //RESPUSERS ID 5
+    public final class RespUsers extends Packet{
+
+        private DB_users[] users;
+        private byte[] data;
+
+        public RespUsers(DB_users[] users){
+            this.users = users;
+            ByteBuffer buffer = ByteBuffer.allocateDirect(1024);
+            for(DB_users user : users){
+                buffer.put(user.toBytes());
+            }
+            byte[] compacted = new byte[buffer.position()];
+            buffer.flip();
+            buffer.get(compacted);
+            this.data = compacted;
+        }
+
+        public short getID(){
+            return 5;
+        }
+        public byte[] getData(){
+            return data;
+        }
+    }
 
     public static ByteBuffer packPacket(short packetID, byte[] data){
         ByteBuffer buffer = ByteBuffer.allocateDirect(6 + data.length);
