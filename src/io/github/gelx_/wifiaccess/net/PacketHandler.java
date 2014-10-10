@@ -8,6 +8,8 @@ import io.github.gelx_.wifiaccess.net.Protocol.*;
  */
 public class PacketHandler {
 
+    //TODO: Add threading
+
     public void handlePacket(Packet packet){
 
         switch (packet.getID()){
