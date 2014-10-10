@@ -55,7 +55,7 @@ public class Protocol {
         }
     }
 
-    public static class GetUsers extends Packet{
+    public static class GetUsersPacket extends Packet{
         public short getID(){
            return 3;
         }
@@ -64,11 +64,11 @@ public class Protocol {
         }
     }
 
-    public static class RespUser extends Packet{
+    public static class RespUserPacket extends Packet{
         private DB_users user;
         private byte[] data;
 
-        public RespUser(DB_users user){
+        public RespUserPacket(DB_users user){
             this.user = user;
             this.data = user.toBytes();
         }
@@ -84,12 +84,12 @@ public class Protocol {
         }
     }
 
-    public static class RespUsers extends Packet{
+    public static class RespUsersPacket extends Packet{
 
         private DB_users[] users;
         private byte[] data;
 
-        public RespUsers(DB_users[] users){
+        public RespUsersPacket(DB_users[] users){
             this.users = users;
             ByteBuffer buffer = ByteBuffer.allocateDirect(1024);
             for(DB_users user : users){
@@ -117,4 +117,14 @@ public class Protocol {
         buffer.flip();
         return buffer;
     }
+
+    public static Packet unpackPacket(short id, ByteBuffer data){
+        switch (id){
+            case 1: return new RegisterUserPacket(data.array());
+            case 2: return new GetUserPacket(data.array());
+            case 3: return new GetUsersPacket();
+            default: throw new IllegalArgumentException("That packetID is not meant to be received!");
+        }
+    }
+
 }

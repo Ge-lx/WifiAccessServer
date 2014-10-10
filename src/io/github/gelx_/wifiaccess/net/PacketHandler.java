@@ -1,7 +1,7 @@
 package io.github.gelx_.wifiaccess.net;
 
 import io.github.gelx_.wifiaccess.database.DB_users;
-import io.github.gelx_.wifiaccess.net.packets.*;
+import io.github.gelx_.wifiaccess.net.Protocol.*;
 
 /**
  * Created by Falk on 08.10.2014.
