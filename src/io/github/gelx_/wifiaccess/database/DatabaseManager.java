@@ -22,7 +22,7 @@ public class DatabaseManager {
     public static final String CONFIGNAME = "db.properties";
     public static final String TABLENAME = "users";
 
-    private Connection dbConn;
+    private Connection dbConn; //java.sql.Connection, NOT ../net/Connection
 
     public DatabaseManager(){
 
