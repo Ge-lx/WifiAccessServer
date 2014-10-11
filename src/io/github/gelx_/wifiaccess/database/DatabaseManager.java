@@ -93,14 +93,6 @@ public class DatabaseManager {
             WifiAccess.LOGGER.severe("Connection to database unsuccessful " + e.getMessage());
             System.exit(1);
         }
-
-
-        //Prepare statements
-
-        /*this.selectUserByName = dbConn.prepareStatement("SELECT * FROM " + TABLENAME + " WHERE name = ?;");
-        this.selectUserByMac = dbConn.prepareStatement("SELECT * FROM " + TABLENAME + " WHERE mac = ?;");
-        this.selectExpiredUsers = dbConn.prepareStatement("SELECT * FROM " + TABLENAME + " WHERE expires < ?");
-        */
     }
 
     public DB_users getUserByName(String name){
