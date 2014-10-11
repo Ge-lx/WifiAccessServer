@@ -24,6 +24,7 @@ public class Connection implements Runnable{
     private PacketHandler handler;
 
     private HashMap<SocketAddress, Stack<ByteBuffer>> outputQueue = new HashMap<>();
+    private Thread thread;
 
     public Connection(InetSocketAddress bindAddress){
         try {
@@ -43,7 +44,8 @@ public class Connection implements Runnable{
 
         handler = new PacketHandler();
 
-        new Thread(this).run();
+        this.thread = new Thread(this);
+        this.thread.start();
     }
 
     public void run(){
@@ -142,6 +144,10 @@ public class Connection implements Runnable{
             WifiAccess.LOGGER.severe("Exception while closing selector! " + e.getMessage());
         }
 
+    }
+
+    public void closeConnections(){
+        thread.interrupt();
     }
 
     public void queuePacketForWrite(Protocol.Packet packet){
