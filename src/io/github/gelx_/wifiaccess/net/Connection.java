@@ -2,6 +2,7 @@ package io.github.gelx_.wifiaccess.net;
 
 import io.github.gelx_.wifiaccess.WifiAccess;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -11,24 +12,26 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.SocketHandler;
 
 /**
  * Created by Gelx on 10.10.2014.
  */
-public class Connection implements Runnable{
+public class Connection{
 
-    private Selector selector;
+    private Selector readSelector;
     private ServerSocketChannel serverChannel;
-    private List<SocketChannel> channels = new ArrayList<>();
+    private HashMap<SocketAddress, SocketChannel> channels = new HashMap<>();
 
     private PacketHandler handler;
 
-    private HashMap<SocketAddress, Stack<ByteBuffer>> outputQueue = new HashMap<>();
-    private Thread thread;
+    private LinkedBlockingQueue<Protocol.Packet> outputQueue = new LinkedBlockingQueue<>();
+    private Thread receiveThread, sendThread;
 
     public Connection(InetSocketAddress bindAddress){
         try {
-            this.selector = Selector.open();
+            this.readSelector = Selector.open();
         } catch (IOException e) {
             WifiAccess.LOGGER.severe("Could not open Selector! " + e.getMessage());
             System.exit(1);
@@ -37,87 +40,74 @@ public class Connection implements Runnable{
             this.serverChannel = ServerSocketChannel.open();
             serverChannel.bind(bindAddress);
             serverChannel.configureBlocking(false);
-            serverChannel.register(selector, SelectionKey.OP_ACCEPT);
+            serverChannel.register(readSelector, SelectionKey.OP_ACCEPT);
         } catch (IOException e) {
             WifiAccess.LOGGER.severe("Could not initialize sockets! " + e.getMessage());
+            System.exit(1);
         }
 
         handler = new PacketHandler();
 
-        this.thread = new Thread(this);
-        this.thread.start();
+        this.receiveThread = new Thread(new Runnable() {
+            public void run() { runReader(); } });
+        this.sendThread = new Thread( new Runnable(){
+            public void run() { runSender(); } });
+        receiveThread.start();
+        sendThread.start();
     }
 
-    public void run(){
+    public void runReader(){
         ByteBuffer readBuffer = ByteBuffer.allocateDirect(4); //Max 4 byte for int
 
         while(!Thread.interrupted()){
             try {
-                if (selector.select(10 * 1000) == 0) {
-                    WifiAccess.LOGGER.severe("No Socket is ready for operations after 10sec. Aborting.");
+                readSelector.select();
 
-                    for (SocketChannel channel : channels) {
-                        try {
-                            channel.close();
-                        } catch (IOException e) {
-                            WifiAccess.LOGGER.severe("Exception while closing sockets! " + e.getMessage());
-                        }
-                    }
-                    try {
-                        serverChannel.close();
-                    }catch(IOException e){
-                        WifiAccess.LOGGER.severe("Exception while closing sockets! " + e.getMessage());
-                    }
-                    selector.close();
-                }
-                Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
+                Iterator<SelectionKey> iterator = readSelector.selectedKeys().iterator();
                 while(iterator.hasNext()){
                     SelectionKey key = iterator.next();
-                    SocketChannel channel = (SocketChannel) key.channel();
 
+                    try {
+                        SocketChannel channel = null;
+                        if (key.channel() instanceof SocketChannel)
+                            channel = (SocketChannel) key.channel();
 
-                    if(!key.isValid()){
-                        String hostname = ((InetSocketAddress)((SocketChannel)key.channel()).getRemoteAddress()).getHostString();//ridiculous
-                        WifiAccess.LOGGER.info("Connection with " + hostname  + " closed by remote host!");
-                        channels.remove(key.channel());
+                        if (key.isAcceptable()) {
+                            //Accept connection
+                            ServerSocketChannel keyChannel = (ServerSocketChannel) key.channel();
+                            SocketChannel clientChannel = keyChannel.accept();
+                            //Add connection to sendlist and selector
+                            channels.put(clientChannel.getRemoteAddress(), clientChannel);
+                            clientChannel.configureBlocking(false);
+                            clientChannel.register(readSelector, SelectionKey.OP_READ);
+                            WifiAccess.LOGGER.info("New client connected!");
 
-                    }
+                        } else if (key.isReadable()) {
+                            //Read packID (short -> 2b)
+                            readToBuffer(readBuffer, channel, 2);
+                            short packetID = readBuffer.getShort();
+                            //Read dataSize (int -> 4b)
+                            readToBuffer(readBuffer, channel, 4);
+                            int dataSize = readBuffer.getInt();
+                            //Read data (size -> dataSize)
+                            ByteBuffer dataBuffer = ByteBuffer.allocate(dataSize);
+                            readToBuffer(dataBuffer, channel, dataSize);
 
-                    if(key.isAcceptable()){
-                        //Accept connection
-                        ServerSocketChannel keyChannel = (ServerSocketChannel) key.channel();
-                        SocketChannel clientChannel = keyChannel.accept();
-                        //Add connection to selector
-                        channels.add(clientChannel);
-                        clientChannel.configureBlocking(false);
-                        clientChannel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-                        //Add stack in output-queue
-                        outputQueue.put(clientChannel.getRemoteAddress(), new Stack<ByteBuffer>());
-
-                    }else if(key.isWritable()){
-                        //Check output-queue for address and write if not empty
-                        Stack<ByteBuffer> outputStack = outputQueue.get(channel.getRemoteAddress());
-                        if(!outputStack.isEmpty()){
-                            channel.write(outputStack.pop());
+                            //Hand off to packetHandler
+                            handler.queuePacket(Protocol.unpackPacket(channel.getRemoteAddress(), packetID, dataBuffer));
+                            WifiAccess.LOGGER.info("Received packet!");
                         }
-                    }else if(key.isReadable()){
-                        //Read packID (short -> 2b)
-                        readToBuffer(readBuffer, channel, 2);
-                        short packetID = readBuffer.getShort();
-                        //Read dataSize (int -> 4b)
-                        readToBuffer(readBuffer, channel, 4);
-                        int dataSize = readBuffer.getInt();
-                        //Read data (size -> dataSize)
-                        ByteBuffer dataBuffer = ByteBuffer.allocateDirect(dataSize);
-                        readToBuffer(dataBuffer, channel, dataSize);
-
-                        //Hand off to packetHandler
-                        handler.handlePacket(Protocol.unpackPacket(channel.getRemoteAddress(), packetID, dataBuffer));
+                    }catch(EOFException e){
+                        String hostname = ((InetSocketAddress) ((SocketChannel) key.channel()).getRemoteAddress()).getHostString();//ridiculous
+                        WifiAccess.LOGGER.info("Connection with " + hostname + " closed!");
+                        key.channel().close();
+                        channels.remove(key.channel());
                     }
 
                     iterator.remove();
                 }
             } catch (IOException e) {
+                e.printStackTrace();
                 WifiAccess.LOGGER.severe("Error in Connection! " + e.getMessage());
                 Thread.currentThread().interrupt();
             }
@@ -126,7 +116,7 @@ public class Connection implements Runnable{
 
         WifiAccess.LOGGER.severe("No Socket is ready for operations after 10sec. Aborting.");
 
-        for (SocketChannel channel : channels) {
+        for (SocketChannel channel : channels.values()) {
             try {
                 channel.close();
             } catch (IOException e) {
@@ -139,28 +129,50 @@ public class Connection implements Runnable{
             WifiAccess.LOGGER.severe("Exception while closing serversocket! " + e.getMessage());
         }
         try {
-            selector.close();
+            readSelector.close();
         } catch (IOException e) {
             WifiAccess.LOGGER.severe("Exception while closing selector! " + e.getMessage());
         }
 
     }
 
+    public void runSender(){
+        while(!Thread.interrupted()){
+            try {
+                Protocol.Packet packet = outputQueue.take();
+                SocketChannel channel = channels.get(packet.getAddress());
+                if(channel.isConnected() && channel.isOpen()) {
+                    try {
+                        channel.write(Protocol.packPacket(packet));
+                    } catch (IOException e) {
+                        WifiAccess.LOGGER.severe("Could not send packet to " + packet.getAddress());
+                    }
+                }
+            } catch (InterruptedException e) {
+                WifiAccess.LOGGER.info("Sending thread was interrupted!");
+                break;
+            }
+        }
+    }
+
     public void closeConnections(){
-        thread.interrupt();
+        sendThread.interrupt();
+        receiveThread.interrupt();
     }
 
     public void queuePacketForWrite(Protocol.Packet packet){
-        if(!outputQueue.containsKey(packet.getAddress()))
-            throw new IllegalArgumentException("No connection with that adderss!");
-        outputQueue.get(packet.getAddress()).add(Protocol.packPacket(packet));
+        outputQueue.add(packet);
     }
 
     private void readToBuffer(ByteBuffer buffer, SocketChannel channel, int length) throws IOException {
         buffer.clear();
         buffer.limit(length);
         while(buffer.remaining() > 0)
-            channel.read(buffer);
+            try {
+                channel.read(buffer);
+            }catch(IOException e){
+                throw new EOFException("IOException while reading!");
+            }
         buffer.flip();
     }
 
