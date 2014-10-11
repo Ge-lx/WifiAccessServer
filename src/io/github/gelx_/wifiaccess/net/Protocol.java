@@ -5,6 +5,8 @@ import io.github.gelx_.wifiaccess.database.DB_users;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Falk on 08.10.2014.
@@ -36,6 +38,12 @@ public class Protocol {
             this.user = DB_users.fromBytes(data);
         }
 
+        public RegisterUserPacket(SocketAddress address, DB_users user){
+            super(address);
+            this.user = user;
+            this.data = user.toBytes();
+        }
+
         public DB_users getUser() {
             return user;
         }
@@ -55,6 +63,12 @@ public class Protocol {
             super(addresses);
             this.data = data;
             this.name = new String(data, Charset.defaultCharset());
+        }
+
+        public GetUserPacket(SocketAddress address, String name){
+            super(address);
+            this.name = name;
+            this.data = Charset.defaultCharset().encode(name).array();
         }
 
         public String getName(){
@@ -92,6 +106,12 @@ public class Protocol {
             this.data = user.toBytes();
         }
 
+        public RespUserPacket(SocketAddress address, byte[] data){
+            super(address);
+            this.data = data;
+            this.user = DB_users.fromBytes(data);
+        }
+
         public DB_users getUser(){
             return user;
         }
@@ -108,12 +128,14 @@ public class Protocol {
         private DB_users[] users;
         private byte[] data;
 
-        public RespUsersPacket(SocketAddress addresses, DB_users[] users){
-            super(addresses);
+        public RespUsersPacket(SocketAddress address, DB_users[] users){
+            super(address);
             this.users = users;
             ByteBuffer buffer = ByteBuffer.allocateDirect(1024);
             for(DB_users user : users){
-                buffer.put(user.toBytes());
+                byte[] userData = user.toBytes();
+                buffer.putInt(userData.length);
+                buffer.put(userData);
             }
             byte[] compacted = new byte[buffer.position()];
             buffer.flip();
@@ -121,6 +143,23 @@ public class Protocol {
             this.data = compacted;
         }
 
+        public RespUsersPacket(SocketAddress address, byte[] data){
+            super(address);
+            this.data = data;
+            List<DB_users> usersList = new ArrayList<>();
+            ByteBuffer buffer = ByteBuffer.wrap(data);
+            while(buffer.remaining() > 0){
+                int userLength = buffer.getInt();
+                byte[] userData = new byte[userLength];
+                buffer.get(userData);
+                usersList.add(DB_users.fromBytes(userData));
+            }
+            this.users = usersList.toArray(new DB_users[usersList.size()]);
+        }
+
+        public DB_users[] getUsers(){
+            return users;
+        }
         public short getID(){
             return 5;
         }
@@ -143,7 +182,9 @@ public class Protocol {
             case 1: return new RegisterUserPacket(address, data.array());
             case 2: return new GetUserPacket(address, data.array());
             case 3: return new GetUsersPacket(address);
-            default: throw new IllegalArgumentException("That packetID is not meant to be received!");
+            case 4: return new RespUserPacket(address, data.array());
+            case 5: return new RespUsersPacket(address, data.array());
+            default: throw new IllegalArgumentException("Received unknown PacketID: " + id);
         }
     }
 
