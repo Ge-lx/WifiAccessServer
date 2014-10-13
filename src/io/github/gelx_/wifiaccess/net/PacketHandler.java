@@ -77,7 +77,6 @@ public class PacketHandler implements Runnable{
             case 2: GetUserPacket getUserPacket = (GetUserPacket) packet;
                 String name = getUserPacket.getName();
                 System.out.println("Received getUserPacket. Name: " + name);
-                Connection conn = WifiAccess.getConnection();
                 WifiAccess.getConnection().queuePacketForWrite(new RespUserPacket(packet.getAddress(), new DB_users(name, "AA:AA:AA:AA:AA:AA", System.currentTimeMillis() + 3600000)));
                 break;
             case 3:

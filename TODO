@@ -1,1 +1,2 @@
 TODO: Implement communication with iptables: Edit rules over commandline and write allowed clients to file that is read over "awk"
+TODO: Some sort of authentication?

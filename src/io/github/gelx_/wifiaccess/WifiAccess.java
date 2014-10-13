@@ -13,7 +13,7 @@ public class WifiAccess {
     public static final Logger LOGGER = Logger.getLogger("WifiAccess");
     public static final String VERSION = "0.1DEV";
 
-    private static Connection connection;
+    private static Connection connection; //TODO: DEBUG ONLY!
 
     public static void main(String... args){
 
