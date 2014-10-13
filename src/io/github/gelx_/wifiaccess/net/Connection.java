@@ -50,7 +50,7 @@ public class Connection{
 
         this.receiveThread = new Thread(new Runnable() {
             public void run() { runReader(); } });
-        this.sendThread = new Thread( new Runnable(){
+        this.sendThread = new Thread(new Runnable(){
             public void run() { runSender(); } });
         receiveThread.start();
         sendThread.start();
@@ -82,7 +82,8 @@ public class Connection{
                             clientChannel.register(readSelector, SelectionKey.OP_READ);
                             WifiAccess.LOGGER.info("New client connected!");
 
-                        } else if (key.isReadable()) {
+                        }
+                        if (key.isReadable()) {
                             //Read packID (short -> 2b)
                             readToBuffer(readBuffer, channel, 2);
                             short packetID = readBuffer.getShort();
