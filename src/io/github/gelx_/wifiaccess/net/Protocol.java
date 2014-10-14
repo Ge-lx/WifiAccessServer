@@ -169,7 +169,7 @@ public class Protocol {
     }
 
     public static ByteBuffer packPacket(Packet packet){
-        ByteBuffer buffer = ByteBuffer.allocateDirect(6 + packet.getData().length);
+        ByteBuffer buffer = ByteBuffer.allocate(6 + packet.getData().length);
         buffer.putShort(packet.getID());
         buffer.putInt(packet.getData().length);
         buffer.put(packet.getData());

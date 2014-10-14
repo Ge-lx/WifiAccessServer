@@ -14,11 +14,12 @@ public class PacketHandler implements Runnable{
 
     private BlockingDeque<Packet> packetQueue = new LinkedBlockingDeque<>(50);
     private Thread thread;
+    private ClientHandler client;
 
-    public PacketHandler(){
+    public PacketHandler(ClientHandler client){
         this.thread = new Thread(this);
+        this.client = client;
         thread.start();
-
     }
 
     public void queuePacket(Packet packet){
@@ -77,7 +78,7 @@ public class PacketHandler implements Runnable{
             case 2: GetUserPacket getUserPacket = (GetUserPacket) packet;
                 String name = getUserPacket.getName();
                 System.out.println("Received getUserPacket. Name: " + name);
-                WifiAccess.getConnection().queuePacketForWrite(new RespUserPacket(packet.getAddress(), new DB_users(name, "AA:AA:AA:AA:AA:AA", System.currentTimeMillis() + 3600000)));
+                client.queuePacketForWrite(new RespUserPacket(packet.getAddress(), new DB_users(name, "AA:AA:AA:AA:AA:AA", System.currentTimeMillis() + 3600000)));
                 break;
             case 3:
                 System.out.println("Received getUsersPacket");
