@@ -46,6 +46,7 @@ public class Connection{
             SSLSocket clientSocket;
             try {
                 clientSocket = (SSLSocket) serverSocket.accept();
+                LOG.info("Client connected!");
             } catch (IOException e) {
                 LOG.severe("Error while waiting for client-connection! " + e.getMessage());
                 break;

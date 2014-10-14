@@ -105,6 +105,7 @@ public class ClientHandler {
     }
 
     public void close(){
+        handler.stop();
         recvThread.interrupt();//Also closes socket and interrupts sender
     }
 
