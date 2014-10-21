@@ -78,10 +78,13 @@ public class PacketHandler implements Runnable{
             case 2: GetUserPacket getUserPacket = (GetUserPacket) packet;
                 String name = getUserPacket.getName();
                 System.out.println("Received getUserPacket. Name: " + name);
-                client.queuePacketForWrite(new RespUserPacket(packet.getAddress(), new DB_users(name, "AA:AA:AA:AA:AA:AA", System.currentTimeMillis() + 3600000)));
+                client.queuePacketForWrite(new RespUserPacket(packet.getAddress(), new DB_users(name, "AA:AA:AA:AA:AA:AA", System.currentTimeMillis())));
                 break;
             case 3:
                 System.out.println("Received getUsersPacket");
+                client.queuePacketForWrite(new RespUsersPacket(packet.getAddress(), new DB_users[]{new DB_users("Hugo", "AA:AA:AA:AA:AA:AA", System.currentTimeMillis() + 3600000),
+                                                                                                   new DB_users("Mark", "AA:AA:AA:AA:AA:AA", System.currentTimeMillis() + 3600000)
+                                                                                                   }));
                 break;
             case 4: RespUserPacket respUserPacket = (RespUserPacket) packet;
                 DB_users respUser = respUserPacket.getUser();

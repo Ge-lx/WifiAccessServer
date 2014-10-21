@@ -19,7 +19,7 @@ public class WifiAccess {
 
         LOGGER.info("Starting WifiAccess v" + VERSION);
 
-        InetSocketAddress address = new InetSocketAddress("127.0.0.1", 8881);
+        InetSocketAddress address = new InetSocketAddress("0.0.0.0", 12345);
         connection = new Connection(address);
 
         //TODO: Write main

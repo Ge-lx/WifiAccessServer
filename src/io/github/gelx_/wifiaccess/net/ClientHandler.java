@@ -29,6 +29,7 @@ public class ClientHandler {
         socket.addHandshakeCompletedListener(new HandshakeCompletedListener() {
             @Override
             public void handshakeCompleted(HandshakeCompletedEvent handshakeCompletedEvent) {
+                LOG.info("Handshake completed!");
                 recvThread = new Thread(new Runnable() {
                     @Override
                     public void run() {
@@ -45,6 +46,11 @@ public class ClientHandler {
                 sendThread.start();
             }
         });
+        try {
+            socket.startHandshake();
+        } catch (IOException e) {
+            LOG.severe("Error while handshaking: " + e.getMessage());
+        }
         handler = new PacketHandler(this);
     }
 
