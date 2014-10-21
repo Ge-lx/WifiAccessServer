@@ -2,8 +2,10 @@ package io.github.gelx_.wifiaccess.net;
 
 import io.github.gelx_.wifiaccess.WifiAccess;
 import io.github.gelx_.wifiaccess.database.DB_users;
+import io.github.gelx_.wifiaccess.database.DatabaseManager;
 import io.github.gelx_.wifiaccess.net.Protocol.*;
 
+import java.util.List;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
 
@@ -16,7 +18,11 @@ public class PacketHandler implements Runnable{
     private Thread thread;
     private ClientHandler client;
 
+    private DatabaseManager databaseManager;
+
     public PacketHandler(ClientHandler client){
+        databaseManager = new DatabaseManager();
+
         this.thread = new Thread(this);
         this.client = client;
         thread.start();
@@ -31,8 +37,9 @@ public class PacketHandler implements Runnable{
     public void run(){
         while(!Thread.interrupted()){
             try {
-                //this.handlePacket(packetQueue.take()); TODO: Change back
-                this.handlePacketDebug(packetQueue.take());
+                this.handlePacket(packetQueue.take());
+                //For debug
+                //this.handlePacketDebug(packetQueue.take());
             } catch (InterruptedException e) {
                 WifiAccess.LOGGER.info("PacketHandler interrupted!");
             }
@@ -48,21 +55,18 @@ public class PacketHandler implements Runnable{
         switch (packet.getID()){
             case 1: RegisterUserPacket registerUserPacket = (RegisterUserPacket) packet;
                     DB_users registerUser = registerUserPacket.getUser();
-                    //TODO: Do something with it;
+                    databaseManager.addUser(registerUser);
                     break;
             case 2: GetUserPacket getUserPacket = (GetUserPacket) packet;
                     String name = getUserPacket.getName();
-                    //TODO: Respond with user!
+                    DB_users user1 = databaseManager.getUserByName(name);
+                    RespUserPacket response1 = new RespUserPacket(packet.getAddress(), user1);
+                    client.queuePacketForWrite(response1);
                     break;
-            case 3: //TODO: Respond with users!
-                    break;
-            case 4: RespUserPacket respUserPacket = (RespUserPacket) packet;
-                    DB_users respUser = respUserPacket.getUser();
-                    //TODO: Do something with it!
-                    break;
-            case 5: RespUsersPacket respUsersPacket = (RespUsersPacket) packet;
-                    DB_users[] respUsers = respUsersPacket.getUsers();
-                    //TODO: Do something with it!
+            case 3: List<DB_users> usersList = databaseManager.getUsers();
+                    DB_users[] users = usersList.toArray(new DB_users[usersList.size()]);
+                    RespUsersPacket response2 = new RespUsersPacket(packet.getAddress(), users);
+                    client.queuePacketForWrite(response2);
                     break;
             default: WifiAccess.LOGGER.info("No handling for packet with ID " + packet.getID() + " implemented!");
         }
@@ -83,8 +87,8 @@ public class PacketHandler implements Runnable{
             case 3:
                 System.out.println("Received getUsersPacket");
                 client.queuePacketForWrite(new RespUsersPacket(packet.getAddress(), new DB_users[]{new DB_users("Hugo", "AA:AA:AA:AA:AA:AA", System.currentTimeMillis() + 3600000),
-                                                                                                   new DB_users("Mark", "AA:AA:AA:AA:AA:AA", System.currentTimeMillis() + 3600000)
-                                                                                                   }));
+                        new DB_users("Mark", "AA:AA:AA:AA:AA:AA", System.currentTimeMillis() + 3600000)
+                }));
                 break;
             case 4: RespUserPacket respUserPacket = (RespUserPacket) packet;
                 DB_users respUser = respUserPacket.getUser();

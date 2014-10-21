@@ -25,8 +25,6 @@ public class DatabaseManager {
     private Connection dbConn; //java.sql.Connection, NOT ../net/Connection
 
     public DatabaseManager(){
-
-
         File configfile = new File(System.getProperty("user.dir") + System.lineSeparator() + CONFIGNAME);
         if(!configfile.exists()){
             WifiAccess.LOGGER.info("Config file not found. Copying default config!");
@@ -157,6 +155,7 @@ public class DatabaseManager {
             List<DB_users> users = new ArrayList<>();
             if(!result.first()){
                 WifiAccess.LOGGER.info("No expired users");
+                result.close();
                 return users;
             }
             do{
@@ -174,6 +173,36 @@ public class DatabaseManager {
             return users;
         } catch (SQLException e) {
             WifiAccess.LOGGER.severe("Error querying for expired users: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public List<DB_users> getUsers(){
+        try {
+            PreparedStatement selectAllUsers = dbConn.prepareStatement("SELECT * FROM " + TABLENAME + ";");
+            ResultSet result = selectAllUsers.executeQuery();
+
+            List<DB_users> users = new ArrayList<>();
+            if(!result.first()){
+                WifiAccess.LOGGER.info("No users!");
+                result.close();
+                return users;
+            }
+            do{
+                String name = result.getString("name");
+                String mac = result.getString("mac");
+                long expires = result.getLong("expires");
+                try{
+                    users.add(new DB_users(name, mac, expires));
+                } catch (IllegalArgumentException e) {
+                    WifiAccess.LOGGER.info("User " + name + " has invalid data: " + e.getMessage());
+                }
+            }while(result.next());
+            result.close();
+
+            return users;
+        } catch (SQLException e) {
+            WifiAccess.LOGGER.severe("Error querying for users: " + e.getMessage());
             return null;
         }
     }
