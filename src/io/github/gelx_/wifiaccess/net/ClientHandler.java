@@ -3,7 +3,10 @@ package io.github.gelx_.wifiaccess.net;
 import javax.net.ssl.HandshakeCompletedEvent;
 import javax.net.ssl.HandshakeCompletedListener;
 import javax.net.ssl.SSLSocket;
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.EOFException;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.concurrent.BlockingQueue;
@@ -25,6 +28,7 @@ public class ClientHandler {
     private BlockingQueue<Protocol.Packet> writeQueue = new LinkedBlockingQueue<>(50);
 
     public ClientHandler(SSLSocket socket){
+        handler = new PacketHandler(this);
         this.socket = socket;
         socket.addHandshakeCompletedListener(new HandshakeCompletedListener() {
             @Override
@@ -51,7 +55,6 @@ public class ClientHandler {
         } catch (IOException e) {
             LOG.severe("Error while handshaking: " + e.getMessage());
         }
-        handler = new PacketHandler(this);
     }
 
     public void queuePacketForWrite(Protocol.Packet packet){

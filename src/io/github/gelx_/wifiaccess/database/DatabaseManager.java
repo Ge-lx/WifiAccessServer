@@ -2,12 +2,10 @@ package io.github.gelx_.wifiaccess.database;
 
 import io.github.gelx_.wifiaccess.WifiAccess;
 
-import javax.xml.transform.Result;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.sql.*;
 import java.util.ArrayList;
@@ -25,17 +23,25 @@ public class DatabaseManager {
     private Connection dbConn; //java.sql.Connection, NOT ../net/Connection
 
     public DatabaseManager(){
-        File configfile = new File(System.getProperty("user.dir") + System.lineSeparator() + CONFIGNAME);
+        try {
+            Class.forName("com.mysql.jdbc.Driver").newInstance();
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+
+        File configfile = new File(System.getProperty("user.dir") + "/" + CONFIGNAME);
         if(!configfile.exists()){
             WifiAccess.LOGGER.info("Config file not found. Copying default config!");
             try {
-                File defaultconfig = new File(getClass().getClassLoader().getResource(CONFIGNAME).toURI() );
+                File defaultconfig = new File(getClass().getClassLoader().getResource(CONFIGNAME).getFile() );
                 if(!configfile.createNewFile()){
                     WifiAccess.LOGGER.severe("Could not create new default config!");
+                } else {
                     Files.copy(defaultconfig.toPath(), new FileOutputStream(configfile));
                     WifiAccess.LOGGER.info("Default config copied!");
                 }
-            } catch (URISyntaxException | IOException e) {
+            } catch ( IOException e) {
                 WifiAccess.LOGGER.severe("Could not copy default config! " + e.getMessage());
                 System.exit(1);
             }
@@ -60,16 +66,17 @@ public class DatabaseManager {
             port = 3306;
         }
         if(properties.getProperty("user") == null){
-            WifiAccess.LOGGER.info("Key \"user\" not found! Using \"mysql\"");
-            properties.setProperty("user", "mysql");
+            WifiAccess.LOGGER.info("Key \"user\" not found! Using \"wifiaccess\"");
+            properties.setProperty("user", "wifiaccess");
         }
         if(properties.getProperty("password") == null){
-            WifiAccess.LOGGER.info("Key \"password\" not found! Using \"mysql\"");
-            properties.setProperty("password", "mysql");
+            WifiAccess.LOGGER.info("Key \"password\" not found! Using \"wifiaccess\"");
+            properties.setProperty("password", "wifiaccess");
         }
         String dbname = properties.getProperty("dbname");
         if(dbname == null){
             WifiAccess.LOGGER.info("Key \"dbname\" not found! Using \"wifiaccess\"");
+            dbname = "wifiaccess";
         }
 
         WifiAccess.LOGGER.info("Config successfully parsed!");
@@ -78,7 +85,7 @@ public class DatabaseManager {
         try {
             this.dbConn = DriverManager.getConnection(url, properties);
         } catch (SQLException e) {
-            WifiAccess.LOGGER.severe("Could not connect to database: " + url);
+            WifiAccess.LOGGER.severe("Could not connect to database: " + url + ": "  +e.getMessage());
             System.exit(1);
         }
 
@@ -123,7 +130,7 @@ public class DatabaseManager {
             throw new IllegalArgumentException("Given mac address is invalid: " + mac);
         }
         try {
-            PreparedStatement selectUserByMac = dbConn.prepareStatement("SELECT * FROM " + TABLENAME + " WHERE mac = ?;");
+            PreparedStatement selectUserByMac = dbConn.prepareStatement("SELECT * FROM " + TABLENAME + " WHERE mac=?;");
             selectUserByMac.setString(1, mac);
             ResultSet result = selectUserByMac.executeQuery();
             if(!result.first()){
@@ -148,7 +155,7 @@ public class DatabaseManager {
 
     public List<DB_users> getExpiredUsers(){
         try {
-            PreparedStatement selectExpiredUsers = dbConn.prepareStatement("SELECT * FROM " + TABLENAME + " WHERE expires < ?");
+            PreparedStatement selectExpiredUsers = dbConn.prepareStatement("SELECT * FROM " + TABLENAME + " WHERE expires<?");
             selectExpiredUsers.setLong(1, System.currentTimeMillis());
             ResultSet result = selectExpiredUsers.executeQuery();
 
@@ -209,7 +216,7 @@ public class DatabaseManager {
 
     public void addUser(DB_users user) {
         try {
-            PreparedStatement insetUser = dbConn.prepareStatement("INSERT INTO " + TABLENAME + " VALUES (?,?,?);");
+            PreparedStatement insetUser = dbConn.prepareStatement("INSERT INTO " + TABLENAME + "(name,mac,expires) VALUES (?,?,?);");
             insetUser.setString(1, user.getName());
             insetUser.setString(2, user.getMac());
             insetUser.setLong(3, user.getExpires());
@@ -224,7 +231,7 @@ public class DatabaseManager {
 
     public void deleteUser(String name){
         try {
-            PreparedStatement deleteUser = dbConn.prepareStatement("DELETE * FROM " + TABLENAME + " WHERE name = ?;");
+            PreparedStatement deleteUser = dbConn.prepareStatement("DELETE * FROM " + TABLENAME + " WHERE name=?;");
             deleteUser.setString(1, name);
             if(!deleteUser.execute()){
                 WifiAccess.LOGGER.info("Could not delete user " + name);

@@ -62,7 +62,7 @@ public class Protocol {
         public GetUserPacket(SocketAddress addresses, byte[] data){
             super(addresses);
             this.data = data;
-            this.name = new String(data, Charset.defaultCharset());
+            this.name = new String(data, Charset.defaultCharset()).trim();
         }
 
         public GetUserPacket(SocketAddress address, String name){

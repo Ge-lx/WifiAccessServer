@@ -2,7 +2,6 @@ package io.github.gelx_.wifiaccess.database;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -61,7 +60,7 @@ public class DB_users {
         ByteBuffer buffer = ByteBuffer.wrap(data);
         byte[] macBytes = new byte[17];
         buffer.get(macBytes);
-        String mac = new String(macBytes, Charset.defaultCharset());
+        String mac = new String(macBytes, Charset.defaultCharset()).trim();
 
         long expires = buffer.getLong();
         byte[] nameBytes = new byte[buffer.remaining()];

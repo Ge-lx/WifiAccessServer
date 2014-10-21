@@ -1,11 +1,9 @@
 <component name="ArtifactManager">
-  <artifact type="jar" build-on-make="true" name="WifiAccessServer_jar">
+  <artifact type="jar" name="WifiAccessServer:jar">
     <output-path>$PROJECT_DIR$/out/artifacts/WifiAccessServer_jar</output-path>
-    <root id="archive" name="WifiAccessServer_jar.jar">
-      <element id="directory" name="META-INF">
-        <element id="file-copy" path="$PROJECT_DIR$/META-INF/MANIFEST.MF" />
-      </element>
+    <root id="archive" name="WifiAccessServer.jar">
       <element id="module-output" name="WifiAccessServer" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/mysql/mysql-connector-java/5.1.33/mysql-connector-java-5.1.33.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>
