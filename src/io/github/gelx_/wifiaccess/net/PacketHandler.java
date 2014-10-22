@@ -68,7 +68,7 @@ public class PacketHandler implements Runnable{
                     RespUsersPacket response2 = new RespUsersPacket(packet.getAddress(), users);
                     client.queuePacketForWrite(response2);
                     break;
-            case 4: DelUserPacket delUserPacket = (DelUserPacket) packet;
+            case 6: DelUserPacket delUserPacket = (DelUserPacket) packet;
                     String delName = delUserPacket.getName();
                     databaseManager.deleteUser(delName);
                     break;
