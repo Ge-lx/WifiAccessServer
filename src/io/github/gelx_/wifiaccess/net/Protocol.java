@@ -168,6 +168,34 @@ public class Protocol {
         }
     }
 
+    public static class DelUserPacket extends Packet{
+
+        private String name;
+        private byte[] data;
+
+        public DelUserPacket(SocketAddress address, String name){
+            super(address);
+            this.name = name;
+            this.data = Charset.defaultCharset().encode(name).array();
+        }
+
+        public DelUserPacket(SocketAddress address, byte[] data){
+            super(address);
+            this.data = data;
+            this.name = new String(data, Charset.defaultCharset()).trim();
+        }
+
+        public String getName(){
+            return name;
+        }
+        public short getID(){
+            return 6;
+        }
+        public byte[] getData(){
+            return data;
+        }
+    }
+
     public static ByteBuffer packPacket(Packet packet){
         ByteBuffer buffer = ByteBuffer.allocate(6 + packet.getData().length);
         buffer.putShort(packet.getID());
@@ -184,6 +212,7 @@ public class Protocol {
             case 3: return new GetUsersPacket(address);
             case 4: return new RespUserPacket(address, data.array());
             case 5: return new RespUsersPacket(address, data.array());
+            case 6: return new DelUserPacket(address, data.array());
             default: throw new IllegalArgumentException("Received unknown PacketID: " + id);
         }
     }

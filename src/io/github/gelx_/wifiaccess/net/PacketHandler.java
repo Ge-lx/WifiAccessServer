@@ -68,6 +68,10 @@ public class PacketHandler implements Runnable{
                     RespUsersPacket response2 = new RespUsersPacket(packet.getAddress(), users);
                     client.queuePacketForWrite(response2);
                     break;
+            case 4: DelUserPacket delUserPacket = (DelUserPacket) packet;
+                    String delName = delUserPacket.getName();
+                    databaseManager.deleteUser(delName);
+                    break;
             default: WifiAccess.LOGGER.info("No handling for packet with ID " + packet.getID() + " implemented!");
         }
     }
