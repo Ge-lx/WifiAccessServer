@@ -233,7 +233,7 @@ public class DatabaseManager {
         try {
             PreparedStatement deleteUser = dbConn.prepareStatement("DELETE FROM " + TABLENAME + " WHERE name=?;");
             deleteUser.setString(1, name);
-            if(!deleteUser.execute()){
+            if(deleteUser.executeUpdate() == 0){
                 WifiAccess.LOGGER.info("Could not delete user " + name);
             }
         } catch (SQLException e) {
