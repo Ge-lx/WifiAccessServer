@@ -111,10 +111,11 @@ public class DatabaseManager {
             }
             String mac = result.getString("mac");
             long expires = result.getLong("expires");
+            String code = result.getString("code");
 
             result.close();
             try {
-                return new DB_users(name, mac, expires);
+                return new DB_users(name, mac, expires, code);
             } catch (IllegalArgumentException e) {
                 WifiAccess.LOGGER.info("User " + name + " has invalid data: " + e.getMessage());
                 return null;
@@ -126,7 +127,7 @@ public class DatabaseManager {
     }
 
     public DB_users getUserByMac(String mac){
-        if(!DB_users.MACREGEX.matcher(mac).matches()){
+        if(!DB_users.MACPATTERN.matcher(mac).matches()){
             throw new IllegalArgumentException("Given mac address is invalid: " + mac);
         }
         try {
@@ -139,10 +140,11 @@ public class DatabaseManager {
             }
             String name = result.getString("name");
             long expires = result.getLong("expires");
+            String code = result.getString("code");
 
             result.close();
             try{
-                return new DB_users(name, mac, expires);
+                return new DB_users(name, mac, expires, code);
             } catch (IllegalArgumentException e) {
                 WifiAccess.LOGGER.info("User " + name + " has invalid data: " + e.getMessage());
                 return null;
@@ -169,8 +171,9 @@ public class DatabaseManager {
                 String name = result.getString("name");
                 String mac = result.getString("mac");
                 long expires = result.getLong("expires");
+                String code = result.getString("code");
                 try {
-                    users.add(new DB_users(name, mac, expires));
+                    users.add(new DB_users(name, mac, expires, code));
                 } catch (IllegalArgumentException e) {
                     WifiAccess.LOGGER.info("User " + name + " has invalid data: " + e.getMessage());
                 }
@@ -199,8 +202,9 @@ public class DatabaseManager {
                 String name = result.getString("name");
                 String mac = result.getString("mac");
                 long expires = result.getLong("expires");
+                String code = result.getString("code");
                 try{
-                    users.add(new DB_users(name, mac, expires));
+                    users.add(new DB_users(name, mac, expires, code));
                 } catch (IllegalArgumentException e) {
                     WifiAccess.LOGGER.info("User " + name + " has invalid data: " + e.getMessage());
                 }
@@ -216,11 +220,12 @@ public class DatabaseManager {
 
     public void addUser(DB_users user) {
         try {
-            PreparedStatement insetUser = dbConn.prepareStatement("INSERT INTO " + TABLENAME + "(name,mac,expires) VALUES (?,?,?);");
-            insetUser.setString(1, user.getName());
-            insetUser.setString(2, user.getMac());
-            insetUser.setLong(3, user.getExpires());
-            if(!insetUser.execute()){
+            PreparedStatement insertUser = dbConn.prepareStatement("INSERT INTO " + TABLENAME + "(name,mac,expires,code) VALUES (?,?,?,?);");
+            insertUser.setString(1, user.getName());
+            insertUser.setString(2, user.getMac());
+            insertUser.setLong(3, user.getExpires());
+            insertUser.setString(4, user.getCode());
+            if(!insertUser.execute()){
                 WifiAccess.LOGGER.info("Could not insert new user into database!");
                 return;
             }
