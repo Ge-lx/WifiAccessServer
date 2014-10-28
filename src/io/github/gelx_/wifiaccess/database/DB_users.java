@@ -35,8 +35,13 @@ public class DB_users {
         this.expires = expires;
     }
 
-    public DB_users(String name, String mac, int expiresIn) {
-        this(name, mac, System.currentTimeMillis() + (expiresIn * 3600L), generateCode());
+    /**
+     * Creates a new user with wildcard mac and random code
+     * @param name
+     * @param expiresIn
+     */
+    public DB_users(String name, int expiresIn) {
+        this(name, "00:00:00:00:00:00", System.currentTimeMillis() + (expiresIn * 3600L), generateCode());
     }
 
     public String getName(){
