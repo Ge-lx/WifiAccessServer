@@ -1,10 +1,11 @@
 package io.github.gelx_.wifiaccess.net;
 
+import io.github.gelx_.wifiaccess.database.DatabaseManager;
+
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
 import java.io.IOException;
-import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,12 +15,13 @@ public class Connection{
 
     private static final Logger LOG = Logger.getLogger("Connection");
 
+    private DatabaseManager db;
     private SSLServerSocket serverSocket;
     private Thread serverThread;
     private List<ClientHandler> clientHandlers = new ArrayList<>();
 
-    public Connection(SocketAddress bindAddress){
-
+    public Connection(SocketAddress bindAddress, DatabaseManager db){
+        this.db = db;
         try {
             serverSocket = (SSLServerSocket) SSLServerSocketFactory.getDefault().createServerSocket();
         } catch (IOException e) {
@@ -51,7 +53,7 @@ public class Connection{
                 LOG.severe("Error while waiting for client-connection! " + e.getMessage());
                 break;
             }
-            clientHandlers.add(new ClientHandler(clientSocket));
+            clientHandlers.add(new ClientHandler(clientSocket, this));
         }
         try {
             serverSocket.close();
@@ -65,5 +67,9 @@ public class Connection{
         for(ClientHandler client : clientHandlers){
             client.close();
         }
+    }
+
+    public DatabaseManager getDatabase(){
+        return db;
     }
 }

@@ -1,5 +1,6 @@
 package io.github.gelx_.wifiaccess;
 
+import io.github.gelx_.wifiaccess.database.DatabaseManager;
 import io.github.gelx_.wifiaccess.net.Connection;
 
 import java.net.InetSocketAddress;
@@ -20,7 +21,9 @@ public class WifiAccess {
         LOGGER.info("Starting WifiAccess v" + VERSION);
 
         InetSocketAddress address = new InetSocketAddress("0.0.0.0", 12345);
-        connection = new Connection(address);
+        DatabaseManager database = new DatabaseManager();
+        connection = new Connection(address, database);
+        LOGGER.info("Connection listening...");
 
         //TODO: Write main
     }

@@ -30,7 +30,7 @@ public class DatabaseManager {
             System.exit(1);
         }
 
-        File configfile = new File(System.getProperty("user.dir") + "/" + CONFIGNAME);
+        File configfile = new File(new File(System.getProperty("user.dir")), CONFIGNAME);
         if(!configfile.exists()){
             WifiAccess.LOGGER.info("Config file not found. Copying default config!");
             try {
@@ -38,7 +38,7 @@ public class DatabaseManager {
                 if(!configfile.createNewFile()){
                     WifiAccess.LOGGER.severe("Could not create new default config!");
                 } else {
-                    Files.copy(defaultconfig.toPath(), new FileOutputStream(configfile));
+                    Files.copy(defaultconfig.getAbsoluteFile().toPath(), new FileOutputStream(configfile));
                     WifiAccess.LOGGER.info("Default config copied!");
                 }
             } catch ( IOException e) {
@@ -48,7 +48,7 @@ public class DatabaseManager {
         }
         Properties properties = new Properties();
         try {
-            properties.load(new FileInputStream(configfile));
+            properties.load(new FileInputStream(configfile.getAbsoluteFile()));
         } catch (IOException e) {
             WifiAccess.LOGGER.severe("Error reading properties! " + e.getMessage());
             System.exit(1);

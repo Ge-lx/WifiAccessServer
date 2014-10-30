@@ -22,12 +22,14 @@ public class ClientHandler {
 
     private SSLSocket socket;
     private PacketHandler handler;
+    private Connection connection;
 
     private Thread recvThread, sendThread;
 
     private BlockingQueue<Protocol.Packet> writeQueue = new LinkedBlockingQueue<>(50);
 
-    public ClientHandler(SSLSocket socket){
+    public ClientHandler(SSLSocket socket, Connection connection){
+        this.connection = connection;
         handler = new PacketHandler(this);
         this.socket = socket;
         socket.addHandshakeCompletedListener(new HandshakeCompletedListener() {
@@ -111,6 +113,10 @@ public class ClientHandler {
                 LOG.severe("Could not write packet! " + e.getMessage());
             }
         }
+    }
+
+    public Connection getConnection(){
+        return connection;
     }
 
     public void close(){
