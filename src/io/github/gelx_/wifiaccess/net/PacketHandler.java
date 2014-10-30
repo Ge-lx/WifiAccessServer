@@ -72,6 +72,20 @@ public class PacketHandler implements Runnable{
                     String delName = delUserPacket.getName();
                     databaseManager.deleteUser(delName);
                     break;
+            case 7: BindUserPacket bindUserPacket = (BindUserPacket) packet;
+                    String mac = bindUserPacket.getMac();
+                    String code = bindUserPacket.getCode();
+                    if(!DB_users.MACPATTERN.matcher(mac).matches() || !DB_users.CODEPATTERN.matcher(code).matches()) {
+                        client.queuePacketForWrite(new RespBindPacket(packet.getAddress(), RespBindPacket.CODE_ILLEGAL));
+                    } else {
+                        try {
+                            databaseManager.bindUser(code, mac);
+                            client.queuePacketForWrite(new RespBindPacket(packet.getAddress(), true));
+                        } catch (DatabaseManager.UnknownCodeException e) {
+                            client.queuePacketForWrite(new RespBindPacket(packet.getAddress(), false));
+                        }
+                    }
+                    break;
             default: WifiAccess.LOGGER.info("No handling for packet with ID " + packet.getID() + " implemented!");
         }
     }

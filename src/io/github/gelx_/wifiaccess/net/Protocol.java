@@ -196,6 +196,89 @@ public class Protocol {
         }
     }
 
+    public static class BindUserPacket extends Packet{
+
+        private byte[] data;
+        private String code;
+        private String mac;
+
+        public BindUserPacket(SocketAddress address, String code, String mac){
+            super(address);
+            this.code = code;
+            this.mac = mac;
+            ByteBuffer buffer = ByteBuffer.allocate(23);
+            buffer.put(Charset.defaultCharset().encode(code));
+            buffer.put(Charset.defaultCharset().encode(mac));
+            data = buffer.array();
+        }
+
+        public BindUserPacket(SocketAddress address, byte[] data){
+            super(address);
+            this.data = data;
+            ByteBuffer buffer = ByteBuffer.wrap(data);
+
+            byte[] codeBytes = new byte[6];
+            buffer.get(codeBytes);
+            this.code = new String(codeBytes, Charset.defaultCharset()).trim();
+
+            byte[] macBytes = new byte[17];
+            buffer.get(macBytes);
+            this.mac = new String(macBytes, Charset.defaultCharset()).trim();
+        }
+
+        public short getID() {
+            return 7;
+        }
+        public byte[] getData() {
+            return data;
+        }
+        public String getCode(){
+            return code;
+        }
+        public String getMac(){
+            return mac;
+        }
+    }
+
+    public static class RespBindPacket extends Packet{
+
+        public static final short CODE_OK = 0,
+                                  CODE_UNKNOWN = 1,
+                                  CODE_ILLEGAL = 2;
+
+        private byte[] data;
+        private short code;
+
+        public RespBindPacket(SocketAddress address, short code){
+            super(address);
+            this.code = code;
+            data = ByteBuffer.allocate(2).putShort(code).array();
+        }
+
+        public RespBindPacket(SocketAddress address, boolean ok){
+            this(address, ok ? CODE_OK : CODE_UNKNOWN);
+        }
+
+        public RespBindPacket(SocketAddress address, byte[] data){
+            super(address);
+            this.data = data;
+            code = ByteBuffer.wrap(data).getShort();
+        }
+
+        public short getID() {
+            return 8;
+        }
+        public byte[] getData() {
+            return data;
+        }
+        public short getCode() {
+            return code;
+        }
+        public boolean isOk(){
+            return this.code == CODE_OK;
+        }
+    }
+
     public static ByteBuffer packPacket(Packet packet){
         ByteBuffer buffer = ByteBuffer.allocate(6 + packet.getData().length);
         buffer.putShort(packet.getID());
@@ -213,6 +296,8 @@ public class Protocol {
             case 4: return new RespUserPacket(address, data.array());
             case 5: return new RespUsersPacket(address, data.array());
             case 6: return new DelUserPacket(address, data.array());
+            case 7: return new BindUserPacket(address, data.array());
+            case 8: return new RespBindPacket(address, data.array());
             default: throw new IllegalArgumentException("Received unknown PacketID: " + id);
         }
     }

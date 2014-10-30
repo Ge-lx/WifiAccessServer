@@ -225,7 +225,7 @@ public class DatabaseManager {
             insertUser.setString(2, user.getMac());
             insertUser.setLong(3, user.getExpires());
             insertUser.setString(4, user.getCode());
-            if(!insertUser.execute()){
+            if(insertUser.executeUpdate() != 1){
                 WifiAccess.LOGGER.info("Could not insert new user into database!");
                 return;
             }
@@ -245,4 +245,19 @@ public class DatabaseManager {
             WifiAccess.LOGGER.info("Error deleting user from database: " + e.getMessage());
         }
     }
+
+    public void bindUser(String code, String mac) throws UnknownCodeException {
+        try{
+            PreparedStatement bindUser = dbConn.prepareStatement("UPDATE " + TABLENAME + " SET mac=? WHERE code=?;");
+            bindUser.setString(1, mac);
+            bindUser.setString(2, code);
+            if(bindUser.executeUpdate() != 1){
+                throw new UnknownCodeException();
+            }
+        } catch (SQLException e) {
+            WifiAccess.LOGGER.info("Could not bind code: " + code + " to mac : " + mac);
+        }
+    }
+
+    public static class UnknownCodeException extends Exception{}
 }

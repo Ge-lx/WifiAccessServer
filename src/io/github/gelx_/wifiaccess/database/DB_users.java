@@ -41,7 +41,7 @@ public class DB_users {
      * @param expiresIn
      */
     public DB_users(String name, int expiresIn) {
-        this(name, "00:00:00:00:00:00", System.currentTimeMillis() + (expiresIn * 3600L), generateCode());
+        this(name, "00:00:00:00:00:00", System.currentTimeMillis() + (expiresIn * 3600000L), generateCode());
     }
 
     public String getName(){
