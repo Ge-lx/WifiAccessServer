@@ -84,7 +84,7 @@ public class DB_users {
 
         byte[] codeBytes = new byte[6];
         buffer.get(codeBytes);
-        String code = new String(macBytes, Charset.defaultCharset()).trim();
+        String code = new String(codeBytes, Charset.defaultCharset()).trim();
         byte[] nameBytes = new byte[buffer.remaining()];
         buffer.get(nameBytes);
         String name = new String(nameBytes, Charset.defaultCharset()).trim();
