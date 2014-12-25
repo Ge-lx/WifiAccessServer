@@ -9,7 +9,7 @@ import java.io.IOException;
  */
 public class IPTablesConnector {
 
-    public static final String insertCmd = "/usr/bin/iptables -I captive_portal 2 -m mac --mac-source %mac% -j ACCEPT";
+    public static final String insertCmd = "/usr/bin/iptables -I captive_portal 3 -m mac --mac-source %mac% -j ACCEPT";
     public static final String removeCmd = "/usr/bin/iptables -D captive_portal -m mac --mac-source %mac% -j ACCEPT";
 
     public IPTablesConnector(){
