@@ -29,8 +29,8 @@ public class ClientHandler {
     private BlockingQueue<Protocol.Packet> writeQueue = new LinkedBlockingQueue<>(50);
 
     public ClientHandler(SSLSocket socket, Connection connection){
-        this.connection = connection;
         handler = new PacketHandler(this);
+        this.connection = connection;
         this.socket = socket;
         socket.addHandshakeCompletedListener(new HandshakeCompletedListener() {
             @Override
